@@ -14,6 +14,12 @@ export interface Book {
   tags: string[];
   content: string;
   created_at: string;
+  retail_price?: number | string | null;
+  wholesale_price?: number | string | null;
+  stock_quantity?: number | null;
+  sales_count?: number | null;
+  /** null — неизвестно (гость), true/false для авторизованного */
+  purchased?: boolean | null;
 }
 
 export interface BookListResponse {
@@ -33,33 +39,34 @@ export interface BookCreateData {
   is_free?: boolean;
   tags?: string[];
   content?: string;
+  wholesale_price?: number;
+  retail_price?: number;
+  stock_quantity?: number;
 }
 
 export const booksApi = {
-  getBooks: (params?: { search?: string; genre?: string; sort?: string; page?: number; per_page?: number }) =>
-    api.get<BookListResponse>('books', { params }),
+  getBooks: (
+    params?: { search?: string; genre?: string; author?: string; sort?: string; page?: number; per_page?: number },
+  ) => api.get<BookListResponse>('books', { params }),
 
-  getBook: (id: number) =>
-    api.get<Book>(`books/${id}`),
+  getBook: (id: number) => api.get<Book>(`books/${id}`),
 
   getBookContent: (id: number) =>
     api.get<{ content: string; title: string }>(`books/${id}/content`),
 
-  createBook: (data: BookCreateData) =>
-    api.post<Book>('books', data),
+  /** Не используем POST /api/books/... — там же createBook только для admin (риск 403 из‑за маршрутизации). */
+  purchaseBook: (id: number) => api.post<Book>(`purchases/books/${id}`),
 
-  updateBook: (id: number, data: Partial<BookCreateData>) =>
-    api.put<Book>(`books/${id}`, data),
+  createBook: (data: BookCreateData) => api.post<Book>('books', data),
 
-  /** Тело — сырой UTF-8 текст, без JSON (меньше размер, стабильнее для больших книг) */
+  updateBook: (id: number, data: Partial<BookCreateData>) => api.put<Book>(`books/${id}`, data),
+
   updateBookContent: (id: number, content: string) =>
     api.put<void>(`books/${id}/content`, content, {
       headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
     }),
 
-  deleteBook: (id: number) =>
-    api.delete(`books/${id}`),
+  deleteBook: (id: number) => api.delete(`books/${id}`),
 
-  getGenres: () =>
-    api.get<string[]>('books/genres'),
+  getGenres: () => api.get<string[]>('books/genres'),
 };

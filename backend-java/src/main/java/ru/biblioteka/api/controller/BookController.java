@@ -6,11 +6,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import ru.biblioteka.api.dto.book.BookCreateRequestDto;
 import ru.biblioteka.api.dto.book.BookListOutDto;
 import ru.biblioteka.api.dto.book.BookOutDto;
 import ru.biblioteka.api.dto.book.BookUpdateRequestDto;
+import ru.biblioteka.api.security.AuthenticatedUser;
 import ru.biblioteka.api.service.BookService;
 
 import java.util.List;
@@ -29,8 +31,13 @@ public class BookController {
             @RequestParam(required = false) String genre,
             @RequestParam(required = false) String sort,
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(bookService.getBooks(search, genre, sort, page, size));
+            /** Совместимость: фронт шлёт {@code per_page}, старый клиент — {@code size}. */
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(name = "per_page", required = false) Integer perPage,
+            @AuthenticationPrincipal AuthenticatedUser authUser) {
+        Long userId = authUser != null ? authUser.getId() : null;
+        int pageSize = (perPage != null && perPage > 0) ? perPage : size;
+        return ResponseEntity.ok(bookService.getBooks(search, genre, sort, page, pageSize, userId));
     }
 
     @GetMapping("/genres")
@@ -39,8 +46,9 @@ public class BookController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BookOutDto> getBook(@PathVariable Long id) {
-        return ResponseEntity.ok(bookService.getBook(id));
+    public ResponseEntity<BookOutDto> getBook(@PathVariable Long id, @AuthenticationPrincipal AuthenticatedUser authUser) {
+        Long userId = authUser != null ? authUser.getId() : null;
+        return ResponseEntity.ok(bookService.getBook(id, userId));
     }
 
     @GetMapping("/{id}/content")

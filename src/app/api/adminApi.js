@@ -1,6 +1,7 @@
 import api from './client';
 export const adminApi = {
     getStats: () => api.get('admin/stats'),
+    getFinanceAnalytics: () => api.get('admin/analytics/finance'),
     getUsers: () => api.get('admin/users'),
     createUser: (data) => api.post('admin/users', data),
     blockUser: (userId) => api.put(`admin/users/${userId}/block`),

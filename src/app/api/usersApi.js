@@ -12,5 +12,6 @@ export const usersApi = {
     getReviews: () => api.get('users/me/reviews'),
     getComments: () => api.get('users/me/comments'),
     getTopics: () => api.get('users/me/topics'),
+    getMyPurchases: () => api.get('users/me/purchases'),
     getUserProfile: (userId) => api.get(`users/${userId}`),
 };

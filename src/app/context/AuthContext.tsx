@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { authApi, type UserProfile } from '../api/authApi';
+import { AUTH_LOST_EVENT } from '../api/client';
 
 type AuthContextValue = {
   isLoggedIn: boolean;
@@ -77,6 +78,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('auth:token');
     localStorage.removeItem('auth:user');
   }, []);
+
+  useEffect(() => {
+    const onAuthLost = () => logout();
+    window.addEventListener(AUTH_LOST_EVENT, onAuthLost);
+    return () => window.removeEventListener(AUTH_LOST_EVENT, onAuthLost);
+  }, [logout]);
 
   const value = useMemo(
     () => ({ isLoggedIn, user, login, register, logout, refreshUser }),

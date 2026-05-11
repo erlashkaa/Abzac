@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -23,6 +24,12 @@ public class BookOutDto {
     private Boolean isFree;
     private Double rating;
     private Integer reviewsCount;
+    private BigDecimal wholesalePrice;
+    private BigDecimal retailPrice;
+    private Integer stockQuantity;
+    private Integer salesCount;
+    /** null — неизвестно (гость), true/false для авторизованного */
+    private Boolean purchased;
     private List<String> tags;
     private String content;
     private LocalDateTime createdAt;

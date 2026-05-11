@@ -6,8 +6,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.biblioteka.api.dto.report.ReportOutDto;
 import ru.biblioteka.api.dto.auth.AuthRequestDto;
+import ru.biblioteka.api.dto.analytics.FinanceAnalyticsResponse;
 import ru.biblioteka.api.dto.user.UserOutDto;
 import ru.biblioteka.api.service.AdminService;
+import ru.biblioteka.api.service.StoreAnalyticsService;
 
 import java.util.List;
 import java.util.Map;
@@ -19,6 +21,7 @@ import java.util.Map;
 public class AdminController {
 
     private final AdminService adminService;
+    private final StoreAnalyticsService storeAnalyticsService;
 
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getStats() {
@@ -50,5 +53,10 @@ public class AdminController {
     @GetMapping("/reports")
     public ResponseEntity<List<ReportOutDto>> getReports() {
         return ResponseEntity.ok(adminService.getReports());
+    }
+
+    @GetMapping("/analytics/finance")
+    public ResponseEntity<FinanceAnalyticsResponse> getFinanceAnalytics() {
+        return ResponseEntity.ok(storeAnalyticsService.getFinanceAnalytics());
     }
 }

@@ -68,6 +68,9 @@ export const usersApi = {
   getTopics: () =>
     api.get<ForumTopic[]>('users/me/topics'),
 
+  getMyPurchases: () =>
+    api.get<Book[]>('users/me/purchases'),
+
   getUserProfile: (userId: number) =>
     api.get<UserProfileResponse>(`users/${userId}`),
 };

@@ -15,6 +15,7 @@ import ru.biblioteka.api.entity.BookTagEntity;
 import ru.biblioteka.api.mapper.DtoMapper;
 import ru.biblioteka.api.repository.BookRepository;
 import ru.biblioteka.api.repository.BookTagRepository;
+import ru.biblioteka.api.repository.PurchaseRepository;
 import ru.biblioteka.api.util.DateTimeUtils;
 
 import java.util.ArrayList;
@@ -30,8 +31,9 @@ public class BookService {
 
     private final BookRepository bookRepository;
     private final BookTagRepository bookTagRepository;
+    private final PurchaseRepository purchaseRepository;
 
-    public BookListOutDto getBooks(String search, String genre, String sort, int page, int perPage) {
+    public BookListOutDto getBooks(String search, String genre, String sort, int page, int perPage, Long userId) {
         PageRequest pageRequest;
         if ("rating".equals(sort)) {
             pageRequest = PageRequest.of(page - 1, perPage, Sort.by(Sort.Direction.DESC, "rating"));
@@ -50,7 +52,14 @@ public class BookService {
         }
 
         List<BookOutDto> books = pageResult.stream()
-                .map(book -> DtoMapper.toBookOutDto(book, bookTagRepository.findByBookId(book.getId()).stream().map(BookTagEntity::getTag).collect(Collectors.toList())))
+                .map(book -> {
+                    Boolean purchased = userId == null ? null : purchaseRepository.existsByUserIdAndBookId(userId, book.getId());
+                    return DtoMapper.toBookOutDto(
+                            book,
+                            bookTagRepository.findByBookId(book.getId()).stream().map(BookTagEntity::getTag).collect(Collectors.toList()),
+                            purchased
+                    );
+                })
                 .collect(Collectors.toList());
 
         return BookListOutDto.builder()
@@ -76,10 +85,15 @@ public class BookService {
     }
 
     public BookOutDto getBook(Long bookId) {
+        return getBook(bookId, null);
+    }
+
+    public BookOutDto getBook(Long bookId, Long userId) {
         BookEntity book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Книга не найдена"));
         var tags = bookTagRepository.findByBookId(book.getId()).stream().map(BookTagEntity::getTag).collect(Collectors.toList());
-        return DtoMapper.toBookOutDto(book, tags);
+        Boolean purchased = userId == null ? null : purchaseRepository.existsByUserIdAndBookId(userId, bookId);
+        return DtoMapper.toBookOutDto(book, tags, purchased);
     }
 
     public Map<String, String> getBookContent(Long bookId) {
@@ -89,6 +103,7 @@ public class BookService {
     }
 
     public BookOutDto createBook(BookCreateRequestDto request) {
+        boolean isFree = request.getIsFree() != null ? request.getIsFree() : false;
         BookEntity book = BookEntity.builder()
                 .title(request.getTitle())
                 .author(request.getAuthor())
@@ -96,7 +111,11 @@ public class BookService {
                 .cover(request.getCover() != null ? request.getCover() : "")
                 .genre(request.getGenre() != null ? request.getGenre() : "")
                 .year(request.getYear() != null ? request.getYear() : 2024)
-                .isFree(request.getIsFree() != null ? request.getIsFree() : false)
+                .isFree(isFree)
+                .wholesalePrice(request.getWholesalePrice())
+                .retailPrice(isFree ? java.math.BigDecimal.ZERO : request.getRetailPrice())
+                .stockQuantity(request.getStockQuantity() != null ? request.getStockQuantity() : 0)
+                .salesCount(0)
                 .content(request.getContent() != null ? request.getContent() : "")
                 .createdAt(DateTimeUtils.moscowNow())
                 .build();
@@ -107,7 +126,7 @@ public class BookService {
             }
         }
         var tags = bookTagRepository.findByBookId(book.getId()).stream().map(BookTagEntity::getTag).collect(Collectors.toList());
-        return DtoMapper.toBookOutDto(book, tags);
+        return DtoMapper.toBookOutDto(book, tags, null);
     }
 
     public BookOutDto updateBook(Long bookId, BookUpdateRequestDto request) {
@@ -120,6 +139,15 @@ public class BookService {
         if (request.getGenre() != null) book.setGenre(request.getGenre());
         if (request.getYear() != null) book.setYear(request.getYear());
         if (request.getIsFree() != null) book.setIsFree(request.getIsFree());
+        if (request.getWholesalePrice() != null) book.setWholesalePrice(request.getWholesalePrice());
+        if (request.getRetailPrice() != null) {
+            if (Boolean.TRUE.equals(book.getIsFree())) {
+                book.setRetailPrice(java.math.BigDecimal.ZERO);
+            } else {
+                book.setRetailPrice(request.getRetailPrice());
+            }
+        }
+        if (request.getStockQuantity() != null) book.setStockQuantity(request.getStockQuantity());
         if (request.getContent() != null) book.setContent(request.getContent());
         if (request.getTags() != null) {
             bookTagRepository.deleteByBookId(book.getId());
@@ -129,7 +157,7 @@ public class BookService {
         }
         bookRepository.save(book);
         var tags = bookTagRepository.findByBookId(book.getId()).stream().map(BookTagEntity::getTag).collect(Collectors.toList());
-        return DtoMapper.toBookOutDto(book, tags);
+        return DtoMapper.toBookOutDto(book, tags, null);
     }
 
     public void updateBookContent(Long bookId, String content) {

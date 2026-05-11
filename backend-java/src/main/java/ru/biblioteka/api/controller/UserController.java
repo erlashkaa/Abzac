@@ -44,6 +44,11 @@ public class UserController {
         return ResponseEntity.ok(userService.getMyTopics(authUser));
     }
 
+    @GetMapping("/me/purchases")
+    public ResponseEntity<List<ru.biblioteka.api.dto.book.BookOutDto>> getMyPurchases(@AuthenticationPrincipal AuthenticatedUser authUser) {
+        return ResponseEntity.ok(userService.getMyPurchases(authUser));
+    }
+
     @PutMapping("/me")
     public ResponseEntity<UserOutDto> updateProfile(
             @AuthenticationPrincipal AuthenticatedUser authUser,

@@ -5,11 +5,12 @@ const api = axios.create({
         'Content-Type': 'application/json',
     },
 });
+export const AUTH_LOST_EVENT = 'biblioteka:auth-lost';
 // Request interceptor: attach JWT token
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('auth:token');
     if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+        config.headers.set('Authorization', `Bearer ${token}`);
     }
     return config;
 });
@@ -23,8 +24,20 @@ api.interceptors.response.use((response) => {
     // 401 — токен недействителен / истёк. 403 — чаще «нет прав» (например не admin);
     // не очищаем сессию на 403, иначе после первого 403 все запросы уходят без Bearer.
     if (error.response?.status === 401) {
-        localStorage.removeItem('auth:token');
-        localStorage.removeItem('auth:user');
+        const path = (error.config?.url ?? '').replace(/^\//, '');
+        // Неверный пароль при логине тоже 401 — не трогаем storage, иначе сбросим валидную сессию.
+        if (path.startsWith('auth/login')) {
+            return Promise.reject(error);
+        }
+        // Сессию сбрасываем только если сервер прямо говорит, что мы "не залогинены"
+        // (проверка профиля). Иначе (например, покупка) не должны выбивать пользователя.
+        if (path.startsWith('auth/me')) {
+            localStorage.removeItem('auth:token');
+            localStorage.removeItem('auth:user');
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new Event(AUTH_LOST_EVENT));
+            }
+        }
     }
     return Promise.reject(error);
 });

@@ -26,6 +26,7 @@ export interface UserProfile {
   role: string;
   is_active: boolean;
   violation_count: number;
+  balance?: number | string | null;
   created_at: string;
 }
 

@@ -22,6 +22,7 @@ import ru.biblioteka.api.repository.BookRepository;
 import ru.biblioteka.api.repository.CommentRepository;
 import ru.biblioteka.api.repository.ForumMessageRepository;
 import ru.biblioteka.api.repository.ForumTopicRepository;
+import ru.biblioteka.api.repository.PurchaseRepository;
 import ru.biblioteka.api.repository.ReviewRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import ru.biblioteka.api.repository.UserRepository;
@@ -42,6 +43,7 @@ public class UserService {
     private final ForumTopicRepository forumTopicRepository;
     private final ForumMessageRepository forumMessageRepository;
     private final BookRepository bookRepository;
+    private final PurchaseRepository purchaseRepository;
     private final PasswordEncoder passwordEncoder;
 
     public UserEntity getActiveUser(AuthenticatedUser principal) {
@@ -227,5 +229,18 @@ public class UserService {
                 .comments(commentsOut)
                 .topics(topics)
                 .build();
+    }
+
+    public List<ru.biblioteka.api.dto.book.BookOutDto> getMyPurchases(AuthenticatedUser principal) {
+        UserEntity user = getActiveUser(principal);
+        // Возвращаем книги, которые пользователь купил (для профиля "Покупки")
+        return purchaseRepository.findByUserIdOrderByCreatedAtDesc(user.getId()).stream()
+                .map(p -> bookRepository.findById(p.getBookId()).orElse(null))
+                .filter(b -> b != null)
+                .map(book -> {
+                    var tags = new ArrayList<String>();
+                    return DtoMapper.toBookOutDto(book, tags, true);
+                })
+                .collect(Collectors.toList());
     }
 }

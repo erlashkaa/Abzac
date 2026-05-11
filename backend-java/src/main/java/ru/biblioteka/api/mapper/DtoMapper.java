@@ -17,6 +17,10 @@ import java.util.List;
 public class DtoMapper {
 
     public static BookOutDto toBookOutDto(BookEntity book, List<String> tags) {
+        return toBookOutDto(book, tags, null);
+    }
+
+    public static BookOutDto toBookOutDto(BookEntity book, List<String> tags, Boolean purchased) {
         return BookOutDto.builder()
                 .id(book.getId())
                 .title(book.getTitle())
@@ -28,6 +32,11 @@ public class DtoMapper {
                 .isFree(book.getIsFree())
                 .rating(book.getRating())
                 .reviewsCount(book.getReviewsCount())
+                .wholesalePrice(book.getWholesalePrice())
+                .retailPrice(book.getRetailPrice())
+                .stockQuantity(book.getStockQuantity())
+                .salesCount(book.getSalesCount())
+                .purchased(purchased)
                 .tags(tags)
                 .content(book.getContent())
                 .createdAt(book.getCreatedAt())
@@ -97,6 +106,7 @@ public class DtoMapper {
                 .role(user.getRole())
                 .isActive(user.getIsActive())
                 .violationCount(user.getViolationCount())
+                .balance(user.getBalance())
                 .createdAt(user.getCreatedAt())
                 .build();
     }

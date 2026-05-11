@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -44,6 +45,18 @@ public class BookEntity {
 
     @Column(name = "reviews_count")
     private Integer reviewsCount;
+
+    @Column(name = "wholesale_price", precision = 12, scale = 2)
+    private BigDecimal wholesalePrice;
+
+    @Column(name = "retail_price", precision = 12, scale = 2)
+    private BigDecimal retailPrice;
+
+    @Column(name = "stock_quantity")
+    private Integer stockQuantity;
+
+    @Column(name = "sales_count")
+    private Integer salesCount;
 
     @Column(columnDefinition = "text")
     private String content;

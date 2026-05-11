@@ -8,6 +8,26 @@ export interface StatsResponse {
   total_readings: number;
 }
 
+export interface SalesByGenreRow {
+  genre: string;
+  sales_count: number;
+  revenue: number | string;
+}
+
+export interface DeficitBookRow {
+  book_id: number;
+  title: string;
+  stock_quantity: number;
+  recommended_restock: number;
+}
+
+export interface FinanceAnalyticsResponse {
+  total_revenue: number | string;
+  net_profit_estimated: number | string;
+  sales_by_genre: SalesByGenreRow[];
+  deficit_books_for_publisher: DeficitBookRow[];
+}
+
 export interface ReportItem {
   id: number;
   reporter_id: number;
@@ -23,6 +43,9 @@ export interface ReportItem {
 export const adminApi = {
   getStats: () =>
     api.get<StatsResponse>('admin/stats'),
+
+  getFinanceAnalytics: () =>
+    api.get<FinanceAnalyticsResponse>('admin/analytics/finance'),
 
   getUsers: () =>
     api.get<UserProfile[]>('admin/users'),

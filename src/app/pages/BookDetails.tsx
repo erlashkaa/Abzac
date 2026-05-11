@@ -11,6 +11,7 @@ import { clsx } from 'clsx';
 import { AVATAR_PLACEHOLDER } from '../constants';
 import { useAuth } from '../context/AuthContext';
 import { getDemoBook, getDemoReviews, isDemoId } from '../demo/demoData';
+import { toast } from 'sonner';
 
 export const BookDetails: React.FC = () => {
   const { id } = useParams();
@@ -18,7 +19,7 @@ export const BookDetails: React.FC = () => {
   const [book, setBook] = useState<Book | null>(null);
   const [activeTab, setActiveTab] = useState<'desc' | 'reviews' | 'comments'>('desc');
   const [isFavorite, setIsFavorite] = useState(false);
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn, user, refreshUser } = useAuth();
 
   // Reviews
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -41,6 +42,7 @@ export const BookDetails: React.FC = () => {
   const [reportReason, setReportReason] = useState('');
   const [reportSuccess, setReportSuccess] = useState(false);
   const [reportError, setReportError] = useState('');
+  const [isPurchasing, setIsPurchasing] = useState(false);
 
   useEffect(() => {
     if (!bookId) return;
@@ -138,6 +140,29 @@ export const BookDetails: React.FC = () => {
     } catch {}
   };
 
+  const handlePurchase = async () => {
+    if (!isLoggedIn) {
+      toast.error('Нужно войти в аккаунт');
+      return;
+    }
+    if (!book) return;
+    if (book.is_free === true || book.purchased === true) return;
+    if (isDemoId(bookId)) return;
+    setIsPurchasing(true);
+    try {
+      const resp = await booksApi.purchaseBook(bookId);
+      setBook(resp.data);
+      // Баланс меняется на бэкенде, но в UI он берётся из профиля — обновим его.
+      await refreshUser();
+      toast.success('Книга куплена');
+    } catch (e: any) {
+      const msg = e?.response?.data?.message || e?.message || 'Не удалось купить книгу';
+      toast.error(msg);
+    } finally {
+      setIsPurchasing(false);
+    }
+  };
+
   const submitReply = async (parentId: number) => {
     if (!isLoggedIn || !replyText.trim()) return;
     const parentComment = comments.find(c => c.id === parentId);
@@ -199,6 +224,10 @@ export const BookDetails: React.FC = () => {
     );
   }
 
+  const isAdminReader = user?.role === 'admin';
+  const canReadFull = book.is_free === true || book.purchased === true || isAdminReader;
+  const price = Number(book.retail_price ?? 0);
+
   return (
     <div className="min-h-screen bg-primary">
       <div className="container mx-auto px-4 py-8">
@@ -209,9 +238,27 @@ export const BookDetails: React.FC = () => {
               <img src={book.cover} alt={book.title} className="w-full h-full object-cover" />
             </div>
             <div className="flex flex-col gap-3">
-              <Link to={`/reader?bookId=${book.id}`} className="w-full py-4 bg-accent text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-accent/20">
-                <BookOpen className="w-5 h-5" /> Читать книгу
-              </Link>
+              {canReadFull ? (
+                <Link to={`/reader?bookId=${book.id}`} className="w-full py-4 bg-accent text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-accent/20">
+                  <BookOpen className="w-5 h-5" /> Читать книгу
+                </Link>
+              ) : (
+                <div className="rounded-2xl border border-base bg-secondary/40 p-4">
+                  <div className="text-center text-sm text-secondary">
+                    {price > 0
+                      ? new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(price)
+                      : 'Цена не указана'}
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isPurchasing || price <= 0}
+                    onClick={handlePurchase}
+                    className="mt-3 w-full py-4 bg-accent text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-accent/20 disabled:opacity-60"
+                  >
+                    {isPurchasing ? 'Покупка…' : 'Купить'}
+                  </button>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"

@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -19,6 +20,9 @@ public class BookCreateRequestDto {
     private String genre;
     private Integer year;
     private Boolean isFree;
+    private BigDecimal wholesalePrice;
+    private BigDecimal retailPrice;
+    private Integer stockQuantity;
     private List<String> tags;
     private String content;
 }

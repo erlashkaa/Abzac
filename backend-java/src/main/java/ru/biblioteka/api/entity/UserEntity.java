@@ -11,6 +11,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -55,6 +56,10 @@ public class UserEntity {
     @Builder.Default
     @Column(name = "violation_count", nullable = false)
     private Integer violationCount = 0;
+
+    @Builder.Default
+    @Column(name = "balance", nullable = false, precision = 14, scale = 2)
+    private BigDecimal balance = BigDecimal.ZERO;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Camera, Edit3, Star, BookOpen, Heart, Clock, Shield, ChevronRight, Save, X, MessageCircle, Hash } from 'lucide-react';
+import { Camera, Edit3, Star, BookOpen, Heart, Clock, Shield, ChevronRight, Save, X, MessageCircle, Hash, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx } from 'clsx';
 import { AVATAR_PLACEHOLDER } from '../constants';
 import { useAuth } from '../context/AuthContext';
 import { usersApi, type ReadingHistoryItem } from '../api/usersApi';
+import { storeApi } from '../api/storeApi';
 import type { Review } from '../api/reviewsApi';
 import type { Comment } from '../api/commentsApi';
 import type { ForumTopic } from '../api/forumApi';
@@ -22,6 +23,10 @@ export const Profile: React.FC = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
   const [topics, setTopics] = useState<ForumTopic[]>([]);
+  const [purchases, setPurchases] = useState<Book[]>([]);
+  const [topUpAmount, setTopUpAmount] = useState('500');
+  const [isTopUpLoading, setIsTopUpLoading] = useState(false);
+  const [balance, setBalance] = useState<number>(user?.balance ? Number(user.balance) : 0);
 
   // Password change
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -31,7 +36,10 @@ export const Profile: React.FC = () => {
   const [passwordSuccess, setPasswordSuccess] = useState('');
 
   useEffect(() => {
-    if (user) setBio(user.about || '');
+    if (user) {
+      setBio(user.about || '');
+      setBalance(user.balance ? Number(user.balance) : 0);
+    }
   }, [user]);
 
   useEffect(() => {
@@ -41,6 +49,7 @@ export const Profile: React.FC = () => {
       usersApi.getReviews().then(r => setReviews(r.data)).catch(() => {});
       usersApi.getComments().then(r => setComments(r.data)).catch(() => {});
       usersApi.getTopics().then(r => setTopics(r.data)).catch(() => {});
+      usersApi.getMyPurchases().then(r => setPurchases(r.data)).catch(() => {});
     }
   }, [isLoggedIn]);
 
@@ -50,6 +59,22 @@ export const Profile: React.FC = () => {
       refreshUser();
       setIsEditingBio(false);
     } catch {}
+  };
+
+  const handleTopUp = async () => {
+    if (!topUpAmount.trim()) return;
+    const amount = Number(topUpAmount.replace(/[^0-9]/g, ''));
+    if (!amount || amount <= 0) return;
+
+    setIsTopUpLoading(true);
+    try {
+      const resp = await storeApi.topUpBalance(amount);
+      setBalance(Number(resp.data.balance ?? 0));
+      await refreshUser();
+      usersApi.getMyPurchases().then(r => setPurchases(r.data)).catch(() => {});
+    } catch {} finally {
+      setIsTopUpLoading(false);
+    }
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner') => {
@@ -94,6 +119,8 @@ export const Profile: React.FC = () => {
   const sections = [
     { key: 'favorites', label: 'Избранное', icon: Heart, count: favorites.length },
     { key: 'history', label: 'История чтения', icon: Clock, count: history.length },
+    { key: 'purchases', label: 'Покупки', icon: BookOpen, count: purchases.length },
+    { key: 'balance', label: 'Баланс', icon: Plus },
     { key: 'reviews', label: 'Отзывы', icon: Star, count: reviews.length },
     { key: 'comments', label: 'Комментарии', icon: MessageCircle, count: comments.length },
     { key: 'topics', label: 'Форум', icon: Hash, count: topics.length },
@@ -140,7 +167,7 @@ export const Profile: React.FC = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-8 bg-secondary p-4 rounded-2xl border border-base">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 bg-secondary p-4 rounded-2xl border border-base">
         <div className="text-center p-4">
           <div className="text-2xl font-bold">{favorites.length}</div>
           <div className="text-xs text-secondary uppercase font-bold">Избранное</div>
@@ -154,6 +181,10 @@ export const Profile: React.FC = () => {
             {new Date(user.created_at).toLocaleDateString('ru-RU', { month: 'short', year: 'numeric' })}
           </div>
           <div className="text-xs text-secondary uppercase font-bold">На платформе с</div>
+        </div>
+        <div className="text-center p-4">
+          <div className="text-2xl font-bold">{new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(balance)}</div>
+          <div className="text-xs text-secondary uppercase font-bold">Баланс</div>
         </div>
       </div>
 
@@ -220,6 +251,63 @@ export const Profile: React.FC = () => {
                   {favorites.map(book => <BookCard key={book.id} book={book} />)}
                 </div>
               )}
+            </div>
+          )}
+
+          {activeSection === 'purchases' && (
+            <div>
+              <h3 className="text-xl font-bold mb-4">Купленные книги</h3>
+              {purchases.length === 0 ? (
+                <div className="text-center py-16 text-secondary">
+                  <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                  <p>Вы ещё не купили ни одной книги</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {purchases.map(book => <BookCard key={book.id} book={book} />)}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeSection === 'balance' && (
+            <div className="space-y-6">
+              <div className="p-6 bg-secondary rounded-2xl border border-base">
+                <h3 className="text-xl font-bold mb-3">Баланс кошелька</h3>
+                <p className="text-3xl font-black mb-4">{new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(balance)}</p>
+                <p className="text-sm text-secondary">Пополните счёт, чтобы покупать книги в магазине. Денежная сумма сразу отразится в вашем профиле.</p>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="p-6 bg-secondary rounded-2xl border border-base space-y-4">
+                  <h4 className="text-lg font-bold">Пополнить баланс</h4>
+                  <input
+                    type="number"
+                    min="100"
+                    step="100"
+                    value={topUpAmount}
+                    onChange={(e) => setTopUpAmount(e.target.value)}
+                    className="w-full px-4 py-3 bg-primary border border-base rounded-xl focus:ring-2 focus:ring-accent outline-none"
+                    placeholder="Сумма в рублях"
+                  />
+                  <button
+                    type="button"
+                    disabled={isTopUpLoading}
+                    onClick={handleTopUp}
+                    className="w-full px-4 py-3 bg-accent text-white rounded-xl font-bold shadow-lg disabled:opacity-60"
+                  >
+                    {isTopUpLoading ? 'Пополнение…' : 'Пополнить'}
+                  </button>
+                </div>
+                <div className="p-6 bg-secondary rounded-2xl border border-base space-y-4">
+                  <h4 className="text-lg font-bold">Советы</h4>
+                  <ul className="space-y-3 text-sm text-secondary list-disc list-inside">
+                    <li>Покупайте книги, чтобы открыть полный текст.</li>
+                    <li>Если книга уже куплена, она будет доступна в вашей библиотеке.</li>
+                    <li>Баланс можно пополнить любым удобным способом.</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           )}
 

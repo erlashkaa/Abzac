@@ -10,6 +10,8 @@
         <java.version>17</java.version>
         <spring.boot.version>3.3.4</spring.boot.version>
         <jjwt.version>0.11.5</jjwt.version>
+        <!-- Явная версия артефакта, чтобы при сборке/публикации не было "неявностей" -->
+        <revision>${project.version}</revision>
     </properties>
 
     <dependencyManagement>

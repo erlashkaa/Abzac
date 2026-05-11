@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import ru.biblioteka.api.entity.*;
 import ru.biblioteka.api.repository.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -52,10 +53,61 @@ public class DataInitializer implements CommandLineRunner {
             seedForumBasics(admin.getId());
         }
 
+        ensureStoreBooksExist();
+
         migrateLegacyForumTags();
         seedCommunityReadersAndContent();
         ensureSeedAdminHasAdminRole();
         ensureReadersHaveBookEngagement();
+    }
+
+    private void ensureStoreBooksExist() {
+        addStoreBookIfMissing("Clean Code", "Robert C. Martin", "A Handbook of Agile Software Craftsmanship.", "Programming", 2008, 350.00, 99);
+        addStoreBookIfMissing("Design Patterns", "Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides", "Elements of Reusable Object-Oriented Software.", "Programming", 1994, 500.00, 50);
+        addStoreBookIfMissing("Effective Java", "Joshua Bloch", "Best practices for the Java platform.", "Programming", 2018, 420.00, 80);
+        addStoreBookIfMissing("Refactoring", "Martin Fowler", "Improving the Design of Existing Code.", "Programming", 2018, 480.00, 60);
+        addStoreBookIfMissing("The Pragmatic Programmer", "Andrew Hunt, David Thomas", "Your Journey to Mastery.", "Programming", 1999, 390.00, 70);
+        addStoreBookIfMissing("Капитанская дочка", "А. С. Пушкин", "Повесть о чести и долге.", "Классика", 1836, 120.00, 200);
+        addStoreBookIfMissing("Мастер и Маргарита", "М. А. Булгаков", "Роман о любви, свободе и правде.", "Классика", 1967, 250.00, 150);
+        addStoreBookIfMissing("451° по Фаренгейту", "Рэй Брэдбери", "Dystopian novel about censorship.", "Sci-Fi", 1953, 220.00, 120);
+        addStoreBookIfMissing("Пикник на обочине", "Аркадий и Борис Стругацкие", "Фантастика о зоне и сталкерах.", "Sci-Fi", 1972, 210.00, 110);
+    }
+
+    private void addStoreBookIfMissing(String title,
+                                       String author,
+                                       String desc,
+                                       String genre,
+                                       int year,
+                                       double retailPrice,
+                                       int stockQuantity) {
+        boolean exists = bookRepository.findAll().stream().anyMatch(b -> b.getTitle() != null && title.equalsIgnoreCase(b.getTitle().trim()));
+        if (exists) {
+            return;
+        }
+
+        BookEntity book = BookEntity.builder()
+                .title(title)
+                .author(author)
+                .description(desc)
+                .genre(genre)
+                .year(year)
+                .rating(0.0)
+                .reviewsCount(0)
+                .isFree(false)
+                .wholesalePrice(BigDecimal.ZERO)
+                .retailPrice(BigDecimal.valueOf(retailPrice))
+                .stockQuantity(stockQuantity)
+                .salesCount(0)
+                .cover("https://picsum.photos/seed/" + title.replace(" ", "") + "/400/600")
+                .content("")
+                .createdAt(LocalDateTime.now())
+                .build();
+        book = bookRepository.save(book);
+
+        BookTagEntity tag = new BookTagEntity();
+        tag.setBookId(book.getId());
+        tag.setTag(genre.toLowerCase());
+        tagRepository.save(tag);
     }
 
     /**

@@ -36,14 +36,15 @@ export const Catalog: React.FC = () => {
         page: pageNum,
         per_page: 20,
       });
-      if (append) {
-        setBooks(prev => [...prev, ...resp.data.books]);
-      } else {
-        // Только книги с API — демо не подмешиваем (иначе «Тайны древнего кода» и т.п. при малой БД)
-        setBooks(resp.data.books);
-      }
-      setTotal(resp.data.total);
-      setHasMore(resp.data.books.length === 20);
+      const chunk = resp.data.books;
+      const totalCount = resp.data.total;
+      setBooks(prev => {
+        const merged = append ? [...prev, ...chunk] : chunk;
+        const more = merged.length < totalCount;
+        queueMicrotask(() => setHasMore(more));
+        return merged;
+      });
+      setTotal(totalCount);
     } catch {
       // silently fail
       if (pageNum === 1) {

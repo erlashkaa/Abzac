@@ -1,6 +1,7 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { authApi } from '../api/authApi';
+import { AUTH_LOST_EVENT } from '../api/client';
 const AuthContext = createContext(undefined);
 export const AuthProvider = ({ children }) => {
     const [isLoggedIn, setIsLoggedIn] = useState(() => {
@@ -65,6 +66,11 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('auth:token');
         localStorage.removeItem('auth:user');
     }, []);
+    useEffect(() => {
+        const onAuthLost = () => logout();
+        window.addEventListener(AUTH_LOST_EVENT, onAuthLost);
+        return () => window.removeEventListener(AUTH_LOST_EVENT, onAuthLost);
+    }, [logout]);
     const value = useMemo(() => ({ isLoggedIn, user, login, register, logout, refreshUser }), [isLoggedIn, user, login, register, logout, refreshUser]);
     return _jsx(AuthContext.Provider, { value: value, children: children });
 };

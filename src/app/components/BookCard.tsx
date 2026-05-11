@@ -13,6 +13,9 @@ export const BookCard: React.FC<{ book: Book }> = React.memo(({ book }) => {
     .filter(Boolean)
     .slice(0, 3);
 
+  const price = Number(book.retail_price ?? 0);
+  const canRead = book.is_free === true || book.purchased === true;
+
   return (
     <motion.article
       whileHover={{ y: -6 }}
@@ -37,7 +40,7 @@ export const BookCard: React.FC<{ book: Book }> = React.memo(({ book }) => {
 
             <div className="absolute inset-x-3 bottom-3 flex items-center gap-2">
               <span className="inline-flex items-center gap-2 px-3 py-2 rounded-2xl glass-effect-light border border-border-color/30 text-xs font-black text-text-primary">
-                Читать
+                {canRead ? 'Читать' : price > 0 ? `${new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(price)} · Купить` : 'Подробнее'}
                 <ArrowUpRight className="w-4 h-4 text-accent-color" />
               </span>
               <span className="ml-auto text-[11px] font-bold text-text-secondary px-2.5 py-2 rounded-2xl bg-black/35 border border-white/10">

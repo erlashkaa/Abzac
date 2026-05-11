@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { clsx } from 'clsx';
 import { AVATAR_PLACEHOLDER } from '../constants';
 import { useAuth } from '../context/AuthContext';
-import { adminApi, type StatsResponse, type ReportItem } from '../api/adminApi';
+import { adminApi, type StatsResponse, type FinanceAnalyticsResponse, type ReportItem } from '../api/adminApi';
 import { booksApi, type Book, type BookCreateData } from '../api/booksApi';
 import type { UserProfile } from '../api/authApi';
 
@@ -47,6 +47,7 @@ export const Admin: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('stats');
   const [stats, setStats] = useState<StatsResponse | null>(null);
+  const [finance, setFinance] = useState<FinanceAnalyticsResponse | null>(null);
   const [books, setBooks] = useState<Book[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [reports, setReports] = useState<ReportItem[]>([]);
@@ -63,7 +64,9 @@ export const Admin: React.FC = () => {
     year: 2024, 
     is_free: false, 
     tags: [],
-    content: ''
+    content: '',
+    retail_price: 0,
+    stock_quantity: 0,
   });
   const genres = ["Фантастика", "Фэнтези", "Детектив", "Романтика", "Триллер", "Ужасы", "Приключения", "Научпоп", "Проза", "Классика"];
 
@@ -84,6 +87,7 @@ export const Admin: React.FC = () => {
 
   useEffect(() => {
     adminApi.getStats().then(r => setStats(r.data)).catch(() => {});
+    adminApi.getFinanceAnalytics().then(r => setFinance(r.data)).catch(() => {});
     booksApi.getBooks({ per_page: 100 }).then(r => setBooks(r.data.books)).catch(() => {});
     adminApi.getUsers().then(r => setUsers(r.data)).catch(() => {});
     adminApi.getReports().then(r => setReports(r.data)).catch(() => {});
@@ -120,7 +124,7 @@ export const Admin: React.FC = () => {
       }
       setShowBookModal(false);
       setEditingBook(null);
-      setBookForm({ title: '', author: '', description: '', cover: '', genre: '', year: 2024, is_free: false, tags: [], content: '' });
+      setBookForm({ title: '', author: '', description: '', cover: '', genre: '', year: 2024, is_free: false, tags: [], content: '', retail_price: 0, stock_quantity: 0 });
       setTxtImportState('idle');
     } catch (err: unknown) {
       const ax = err as { response?: { data?: { detail?: unknown; message?: string } }; message?: string };
@@ -153,6 +157,8 @@ export const Admin: React.FC = () => {
         is_free: fullBook.is_free,
         tags: fullBook.tags,
         content: fullBook.content,
+        retail_price: fullBook.retail_price ? Number(fullBook.retail_price) : 0,
+        stock_quantity: fullBook.stock_quantity ?? 0,
       });
     } catch {
       setBookForm({
@@ -165,6 +171,8 @@ export const Admin: React.FC = () => {
         is_free: book.is_free,
         tags: book.tags,
         content: book.content,
+        retail_price: book.retail_price ? Number(book.retail_price) : 0,
+        stock_quantity: book.stock_quantity ?? 0,
       });
     }
     setShowBookModal(true);
@@ -269,6 +277,26 @@ export const Admin: React.FC = () => {
                   </div>
                 ))}
               </div>
+              {finance && (
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="bg-primary border border-base rounded-2xl p-6">
+                    <p className="text-4xl font-black text-emerald-500">{new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(Number(finance.total_revenue))}</p>
+                    <p className="text-xs font-bold text-secondary uppercase mt-2">Выручка</p>
+                  </div>
+                  <div className="bg-primary border border-base rounded-2xl p-6">
+                    <p className="text-4xl font-black text-fuchsia-500">{new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(Number(finance.net_profit_estimated))}</p>
+                    <p className="text-xs font-bold text-secondary uppercase mt-2">Прибыль</p>
+                  </div>
+                  <div className="bg-primary border border-base rounded-2xl p-6">
+                    <p className="text-4xl font-black text-sky-500">{finance.sales_by_genre.length}</p>
+                    <p className="text-xs font-bold text-secondary uppercase mt-2">Жанры продаж</p>
+                  </div>
+                  <div className="bg-primary border border-base rounded-2xl p-6">
+                    <p className="text-4xl font-black text-rose-500">{finance.deficit_books_for_publisher.length}</p>
+                    <p className="text-xs font-bold text-secondary uppercase mt-2">Дефицит</p>
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -280,7 +308,7 @@ export const Admin: React.FC = () => {
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary" />
                   <input type="text" value={searchBooks} onChange={(e) => setSearchBooks(e.target.value)} placeholder="Поиск книг..." className="w-full pl-12 pr-4 py-3 bg-secondary border border-base rounded-xl focus:ring-2 focus:ring-accent outline-none" />
                 </div>
-                <button onClick={() => { setEditingBook(null); setTxtImportState('idle'); setBookForm({ title: '', author: '', description: '', cover: '', genre: '', year: 2024, is_free: false, tags: [], content: '' }); setShowBookModal(true); }} className="flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-xl font-bold shadow-lg">
+                <button onClick={() => { setEditingBook(null); setTxtImportState('idle'); setBookForm({ title: '', author: '', description: '', cover: '', genre: '', year: 2024, is_free: false, tags: [], content: '', retail_price: 0, stock_quantity: 0 }); setShowBookModal(true); }} className="flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-xl font-bold shadow-lg">
                   <Plus className="w-5 h-5" /> Добавить книгу
                 </button>
               </div>
@@ -455,6 +483,37 @@ export const Admin: React.FC = () => {
                       <input type="checkbox" checked={bookForm.is_free} onChange={(e) => setBookForm(prev => ({ ...prev, is_free: e.target.checked }))} className="w-4 h-4 accent-accent" />
                       <span className="text-sm font-medium">Бесплатная</span>
                     </label>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase text-secondary ml-1">Цена (₽)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      step={1}
+                      placeholder="0"
+                      value={Number(bookForm.retail_price ?? 0)}
+                      onChange={(e) => setBookForm(prev => ({ ...prev, retail_price: Math.max(0, Number(e.target.value) || 0) }))}
+                      disabled={bookForm.is_free === true}
+                      className="w-full px-4 py-3 bg-secondary border border-base rounded-xl focus:ring-2 focus:ring-accent outline-none disabled:opacity-60"
+                    />
+                    {bookForm.is_free ? (
+                      <p className="text-[11px] text-secondary ml-1 mt-1">Для бесплатной книги цена игнорируется</p>
+                    ) : null}
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase text-secondary ml-1">Остаток (шт.)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      step={1}
+                      placeholder="0"
+                      value={Number(bookForm.stock_quantity ?? 0)}
+                      onChange={(e) => setBookForm(prev => ({ ...prev, stock_quantity: Math.max(0, parseInt(e.target.value) || 0) }))}
+                      className="w-full px-4 py-3 bg-secondary border border-base rounded-xl focus:ring-2 focus:ring-accent outline-none"
+                    />
                   </div>
                 </div>
 
