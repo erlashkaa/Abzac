@@ -1,0 +1,30 @@
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/abzatz}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:DhhkKLNM}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          time_zone: UTC
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    serialization:
+      write-dates-as-timestamps: false
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+  tomcat:
+    # Большие тексты книг (JSON / plain) — дефолт 2MB может рвать соединение
+    max-http-form-post-size: 32MB
+    max-swallow-size: 32MB
+jwt:
+  secret: ${JWT_SECRET:abzatz-super-secret-key-change-in-production}
+  expiration-minutes: 1440

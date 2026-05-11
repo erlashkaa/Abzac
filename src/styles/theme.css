@@ -1,0 +1,307 @@
+@import "tailwindcss";
+
+@theme {
+  --color-accent: var(--accent-color);
+  --color-accent-secondary: var(--accent-secondary);
+  --color-accent-tertiary: var(--accent-tertiary);
+  --color-accent-cyan: var(--accent-cyan);
+  --color-accent-foreground: var(--accent-foreground);
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+}
+
+:root {
+  /* Accent colors */
+  --accent-color: #3B82F6;
+  --accent-secondary: #8B5CF6;
+  --accent-tertiary: #60A5FA;
+  --accent-cyan: #06B6D4;
+  --accent-foreground: #ffffff;
+  
+  /* Dark backgrounds */
+  --bg-primary: #020617;
+  --bg-secondary: #071022;
+  --bg-tertiary: #0F172A;
+  --bg-elevated: rgba(15, 23, 42, 0.72);
+  --bg-elevated-2: rgba(30, 41, 59, 0.55);
+  --bg-overlay: rgba(2, 6, 23, 0.7);
+  
+  /* Text colors */
+  --text-primary: #F1F5F9;
+  --text-secondary: #CBD5E1;
+  --text-tertiary: #94A3B8;
+  --text-muted: rgba(148, 163, 184, 0.72);
+  
+  /* Borders & elements */
+  --border-color: #1E293B;
+  --border-light: #334155;
+  --card-bg: #0F172A;
+  --card-hover-bg: #1E293B;
+  --ring: rgba(96, 165, 250, 0.45);
+  --shadow: rgba(0, 0, 0, 0.35);
+  --shadow-2: rgba(0, 0, 0, 0.55);
+  --noise-opacity: 0.06;
+  
+  /* Semantic colors */
+  --success: #10B981;
+  --warning: #F59E0B;
+  --error: #EF4444;
+  --info: #06B6D4;
+}
+
+/* Light theme overrides */
+[data-theme="light"] {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --bg-elevated: rgba(255, 255, 255, 0.78);
+  --bg-elevated-2: rgba(241, 245, 249, 0.72);
+  --bg-overlay: rgba(15, 23, 42, 0.22);
+
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-tertiary: #475569;
+  --text-muted: rgba(71, 85, 105, 0.75);
+
+  --border-color: #e2e8f0;
+  --border-light: #cbd5e1;
+  --card-bg: #ffffff;
+  --card-hover-bg: #f1f5f9;
+
+  --ring: rgba(59, 130, 246, 0.25);
+  --shadow: rgba(2, 6, 23, 0.12);
+  --shadow-2: rgba(2, 6, 23, 0.18);
+  --noise-opacity: 0.035;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Utility classes */
+.bg-primary { background-color: var(--bg-primary); }
+.bg-secondary { background-color: var(--bg-secondary); }
+.bg-tertiary { background-color: var(--bg-tertiary); }
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
+.border-base { border-color: var(--border-color); }
+.border-light { border-color: var(--border-light); }
+.card-base { 
+  background-color: var(--card-bg); 
+  border: 1px solid var(--border-color); 
+}
+
+/* Glassmorphism effect */
+.glass-effect {
+  background: var(--bg-elevated);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid rgba(51, 65, 85, 0.22);
+}
+
+.glass-effect-light {
+  background: var(--bg-elevated-2);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgba(51, 65, 85, 0.16);
+}
+
+/* Glow effects */
+.glow-accent {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.2), inset 0 0 20px rgba(59, 130, 246, 0.1);
+}
+
+.glow-purple {
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.2), inset 0 0 20px rgba(139, 92, 246, 0.1);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.2), inset 0 0 20px rgba(6, 182, 212, 0.1);
+}
+
+/* Floating gradient backgrounds */
+.floating-gradient {
+  position: relative;
+  overflow: hidden;
+}
+
+.floating-gradient::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.1), transparent 50%);
+  animation: float 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(30px, 30px); }
+}
+
+/* Smooth transitions */
+.smooth-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.smooth-transition-slow {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Skeleton loaders */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-secondary) 50%, var(--bg-tertiary) 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 8px;
+  border: 2px solid var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+/* Accent text variants */
+.text-accent {
+  color: var(--accent-color);
+}
+
+.text-accent-secondary {
+  color: var(--accent-secondary);
+}
+
+.text-accent-cyan {
+  color: var(--accent-cyan);
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  background-color: var(--card-hover-bg);
+  border-color: var(--border-light);
+  transform: translateY(-2px);
+}
+
+/* Button focus states */
+.focus-ring:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+/* Smooth backdrop blur */
+.blur-sm { backdrop-filter: blur(4px); }
+.blur-md { backdrop-filter: blur(12px); }
+.blur-lg { backdrop-filter: blur(20px); }
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-secondary), var(--accent-cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Correct scrollbar selectors (keep legacy rules above) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 8px;
+  border: 2px solid var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+/* Premium dark UI helpers */
+.app-surface {
+  background:
+    radial-gradient(1200px 600px at 12% -10%, rgba(59, 130, 246, 0.18), transparent 60%),
+    radial-gradient(900px 500px at 92% 10%, rgba(139, 92, 246, 0.14), transparent 55%),
+    radial-gradient(800px 520px at 70% 110%, rgba(6, 182, 212, 0.12), transparent 55%),
+    linear-gradient(180deg, var(--bg-primary), var(--bg-secondary) 55%, var(--bg-primary));
+}
+
+.app-grid-overlay {
+  background-image:
+    linear-gradient(to right, rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse at 50% 30%, black 45%, transparent 70%);
+}
+
+.app-noise {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
+  opacity: var(--noise-opacity);
+  mix-blend-mode: overlay;
+}
+
+.shadow-soft {
+  box-shadow:
+    0 18px 60px var(--shadow-2),
+    0 1px 0 rgba(255, 255, 255, 0.04) inset;
+}
+
+.ring-soft:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--ring);
+}
+
+.btn-glow {
+  box-shadow:
+    0 18px 40px rgba(59, 130, 246, 0.22),
+    0 1px 0 rgba(255, 255, 255, 0.08) inset;
+}
+
+.kbd {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(30, 41, 59, 0.65);
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  color: rgba(241, 245, 249, 0.86);
+}
